@@ -1,0 +1,11 @@
+[Unit]
+Description=gunicorn3 for hackaday-36-spring
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/hackaday/day36_spring
+ExecStart=/bin/gunicorn3 -e SCRIPT_NAME=/hackaday/spring --bind 0.0.0.0:8036 app:app
+
+[Install]
+WantedBy=multi-user.target

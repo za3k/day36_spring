@@ -1,0 +1,16 @@
+{% extends 'base2.html' %}
+
+{% block header %}
+    <p><i><b>{{ project_name }}</b></i>: {{ description }} {{ instructions | safe }}</p>
+{% endblock %}
+
+{% block content %}
+<div class="art">
+    {% for i in range(32) %}<div>{% for j in range(32) %}<div class="pixel"></div>{% endfor %}</div>{% endfor %}
+</div>
+
+<div class="tools">
+    Pencil
+    Eraser
+</div>
+{% endblock %}
