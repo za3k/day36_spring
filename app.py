@@ -9,8 +9,8 @@ project = load_info({
     "project": "spring",
     "source_url": "https://github.com/za3k/day36_spring",
     "subdir": "/hackaday/spring",
-    "description": "Click to drag",
-    "instructions": "",
+    "description": "",
+    "instructions": "Watch balls and sticks connected by strings",
     "login": False,
     "fullscreen": True,
 })

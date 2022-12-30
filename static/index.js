@@ -1,19 +1,13 @@
 'use strict';
 
-const randomFloat = (a, b) => Math.random()*(b-a)+a;
-const randomInt = (a,b) => Math.floor(randomFloat(a, b+1));
-const randomChoice = (a) => a[randomInt(0, a.length-1)];
-const randomPosition = (w, h) => { return {x: randomFloat(0, w), y: randomFloat(0, h)} };
-const randomAngle = () => randomFloat(0, 2*Math.PI);
-const randomColor = () => `#${Math.floor(Math.random()*16777215).toString(16)}`;
+// Vector helpers
 const unit = (angle) => { return { x: Math.cos(angle), y: Math.sin(angle) } };
 const scale = (v, c) => { return { x: v.x * c, y: v.y * c } };
 const add = (v1, v2) => { return { x: v1.x + v2.x, y: v1.y + v2.y } };
 const dot = (v1, v2) => v1.x*v2.x + v1.y*v2.y;
 const neg = (v) => scale(v, -1);
+const mag = (v) => dot(v, v);
 const sub = (v1, v2) => add(v1, neg(v2));
-const randomVelocity = (speed) => scale(unit(randomAngle()), speed);
-
 function projection_rejection(vector, onto) {
     // ONTO is a unit vector already
     const withMag = dot(vector, onto);
@@ -21,11 +15,23 @@ function projection_rejection(vector, onto) {
     const perp = sub(vector, with_);
     return [with_, perp]
 }
+const cross2d = (v1, v2) => (v1.x*v2.y - v1.y*v2.x); // Determinant. Points either into or out of the screen.
+
+// Random helpers
+const randomFloat = (a, b) => Math.random()*(b-a)+a;
+const randomInt = (a,b) => Math.floor(randomFloat(a, b+1));
+const randomChoice = (a) => a[randomInt(0, a.length-1)];
+const randomPosition = (w, h) => { return {x: randomFloat(0, w), y: randomFloat(0, h)} };
+const randomAngle = () => randomFloat(0, 2*Math.PI);
+const randomColor = () => `#${Math.floor(Math.random()*16777215).toString(16)}`;
+const randomVelocity = (speed) => scale(unit(randomAngle()), speed);
+
 
 // Print debug info about an object
 function debug(o, g, ctx) {
     // Print in red text: position, velocity
-    let text = `x: ${Math.floor(o.state.position.x)} y: ${Math.floor(o.state.position.y)}`;
+    let text = `${o.constructor.name}`;
+    //if (o.state.position) text += `\nx: ${Math.floor(o.state.position.x)} y: ${Math.floor(o.state.position.y)}`;
     if (o.state.velocity) text += `\ndx: ${Math.floor(o.state.velocity.x)} dy: ${Math.floor(o.state.velocity.y)}`;
     if (o.state.angle) text += `\nθ: ${Math.floor(o.state.angle)} dθ: ${Math.floor(o.state.angleVelocity)}`;
 
@@ -40,13 +46,13 @@ function debug(o, g, ctx) {
     }
 }
 
-// todo? currents rather than gravity
-// Make an object affected by gravity
 const GRAVITY = 980; // + is down
 const INELASTIC = -0.7; // Model inelastic collisions as a 30% damper
+// Make an object affected by gravity
 function gravity(o, g) {
     o.state.velocity.y += g.elapsed * GRAVITY;
 }
+// todo: water currents
 
 // Make an object obey inertia
 function drift(o, g) {
@@ -69,15 +75,16 @@ function bounce(o, g) {
         o.state.position.x = 2*g.w - o.state.position.x;
         o.state.velocity.x *= INELASTIC;
     }
+    // TODO: Fix vibration at the bottom of the screen under gravity
     if (o.state.position.y < 0) {
         o.state.position.y *= -1;
         o.state.velocity.y *= INELASTIC;
-        // TODO: Fix vibration at the bottom of the screen
     } else if (o.state.position.y >= g.h) {
         o.state.position.y = 2*g.h - o.state.position.y;
         o.state.velocity.y *= INELASTIC;
     }
 }
+// TODO: Fix small orbits
 
 // TODO: Some connections should be draggable
 class Connection {
@@ -143,6 +150,15 @@ class Sphere {
     applyMomentum(v) {
         this.state.velocity.x += v.x / this.mass;
         this.state.velocity.y += v.y / this.mass;
+        if (!this.printedNaN) {
+            this.xs ||= [];
+            this.xs.push([this.state.position.x, this.state.velocity.x, v.x]);
+            if (isNaN(this.state.velocity.x)) {
+                this.printedNaN = true;
+                console.log(this.xs);
+            }
+                
+        }
     }
 }
 
@@ -191,14 +207,16 @@ class Stick {
     // Linear velocity -- Len/s, Len/s, Len/s
 
     constructor(length, color, state) {
-        const LINEAR_DENSITY = 100;
+        const LINEAR_DENSITY = 1;
         this.mass = length * LINEAR_DENSITY;
         this.length = length;
+        this.radius = length / 2;
+        this.moment = this.mass * (this.radius*this.radius);
         this.color = color;
         this.state = state;
         this.connections = {
-            a: this.makeConnection("a", -this.length/2),
-            b: this.makeConnection("b", this.length/2),
+            a: this.makeConnection("a", -this.radius),
+            b: this.makeConnection("b", this.radius),
             center: this.makeConnection("center", 0),
         };
     }
@@ -233,14 +251,18 @@ class Stick {
         // Calculate the portion of the force which becomes linear movement, and the part that becomes torque
 
         // Portion along the stick, portion perpendictular to the stick
-        const [along, perp] = projection_rejection(v, unit(this.angle));
+        const lineDir = unit(this.state.angle);
+        const [along, perp] = projection_rejection(v, lineDir);
+
+        this.state.velocity = add(this.state.velocity, scale(v, 1.0 / this.mass));
+        this.state.angleVelocity += cross2d(perp, lineDir) * -offset / this.moment;
     }
     offsetPos(offset) {
         return add(this.state.position, scale(unit(this.state.angle), offset));
     }
     offsetVel(offset) {
-        // TODO: Add torque component
-        return this.state.velocity;
+        const angleVel = scale(unit(this.state.angle+Math.PI/2), this.state.angleVelocity);
+        return add(this.state.velocity, angleVel);
     }
 }
 
@@ -276,6 +298,7 @@ class Game {
         setInterval(() => {
             this.tick();
             this.render();
+            $(".objects").text(this.objects.length);
             $(".fps").text(`${Math.floor(frames++ * 1000 / (Date.now()-start))}`);
         }, (1000/60.0));
     }

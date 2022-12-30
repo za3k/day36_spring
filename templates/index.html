@@ -3,6 +3,7 @@
 {% block header %}
     <p><i><b>{{ project_name }}</b></i>: {{ description }} {{ instructions | safe }}</p>
     <span style="float:right;"><span class="fps">--</span> fps</span>
+    <span style="float:right;"><span class="objects">--</span> objects</span>
     <script src="{{ url_for('static', filename='index.js') }}"></script>
 {% endblock %}
 

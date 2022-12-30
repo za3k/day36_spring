@@ -17,10 +17,12 @@
         {% block toplinks %}
         {% endblock %}
         <li><a href="{{ url_for('about') }}">About</a>
+        {% if login %}
         {% if current_user.is_authenticated %}
         <li class="nav-item"><a class="nav-link" href="logout">Log Out ({{ current_user.id }})</a></li>
         {% else %}
         <li class="nav-item"><a class="nav-link" href="login">Log In</a></li>
+        {% endif %}
         {% endif %}
     </ul>
     {% block extras %}{% endblock %}
