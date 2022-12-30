@@ -1,27 +1,8 @@
 /* -- This specific Hack-A-Day project -- */
 
-.art {
-    border: 2px solid;
-    margin: 20px;
-    width: fit-content;
-    background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAABlBMVEVMTExVVVUnhsEkAAAAHUlEQVR4AWOAAUYoQOePEAUj3v9oYDQ9gMBoegAAJFwCAbLaTIMAAAAASUVORK5CYII="); /* "Transparent" from piskel */
-    z-index: -1;
-}
-
-.art > div {
-    height: 16px;
-}
-
-.pixel {
-    width: 16px;
-    height: 16px;
-    display: inline-block;
-    /*border: 1px solid;*/
-    margin: 0;
-}
-
-.pixel:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+canvas#game {
+    width: 100%;
+    height: 100%;
 }
 
 /* -- All Hack-A-Day projects -- */

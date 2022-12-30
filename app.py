@@ -5,13 +5,13 @@ from base import app,load_info,ajax,DBDict,DBList,random_id,hash_id,full_url_for
 
 # -- Info for every Hack-A-Day project --
 project = load_info({
-    "project_name": "Hack-A-Sprite",
-    "project": "sprite",
-    "source_url": "https://github.com/za3k/day35_sprite",
-    "subdir": "/hackaday/sprite",
-    "description": "Draw some 4-bit art",
+    "project_name": "Hack-A-Spring",
+    "project": "spring",
+    "source_url": "https://github.com/za3k/day36_spring",
+    "subdir": "/hackaday/spring",
+    "description": "Click to drag",
     "instructions": "",
-    "login": True,
+    "login": False,
     "fullscreen": True,
 })
 
